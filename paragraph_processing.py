@@ -2,6 +2,7 @@ import pymupdf
 from pymupdf import TEXT_DEHYPHENATE
 import os
 from statistics import mean, median
+from razdel import sentenize
 import re
 
 def extract_lines(page):
@@ -94,6 +95,7 @@ def get_figures_paragraphs(paragraphs, min_len=5):
     figure_pattern = re.compile(r'(рис\.|рисун[a-я]{2})', re.IGNORECASE)
     figure_paragraphs = []
 
+    '''
     for i in range(len(paragraphs)):
         if figure_pattern.search(paragraphs[i]):
 
@@ -104,9 +106,28 @@ def get_figures_paragraphs(paragraphs, min_len=5):
                     if len(paragraph) > min_len:
                         break
 
-            figure_paragraphs.append("\n".join(paragraph))
+          figure_paragraphs.append("\n".join(paragraph))
+    '''
+    for p in paragraphs:
+        if figure_pattern.search(p):
+            figure_paragraphs.append(p)
 
     return figure_paragraphs
+
+def split_paragraphs_on_sent(paragraphs):
+
+    splited_paragraphs = []
+
+    for p in paragraphs:
+
+        sentences = []
+
+        for sent in sentenize(p):
+            sentences.append(sent)
+
+        splited_paragraphs.append(sentences)
+
+    return splited_paragraphs
 
 if __name__ == "__main__":
 
