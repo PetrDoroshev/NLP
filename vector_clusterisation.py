@@ -29,7 +29,7 @@ def plot_dendrogram(model, **kwargs):
     dendrogram(linkage_matrix, **kwargs)
 
 
-model = Word2Vec.load('word2vec.model')
+model = Word2Vec.load('./models/word2vec.model')
 
 vectors = [model.wv[w] for w in model.wv.key_to_index]
 words = [w for w in model.wv.key_to_index]
@@ -64,5 +64,5 @@ for item in labels:
 
 for item in clusters:
     print ("Cluster ", item, "-", len(clusters[item]))
-    for i in clusters[item]:
-        print(i)
+    """for i in clusters[item]:
+        print(i)"""

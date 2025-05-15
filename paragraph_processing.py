@@ -5,6 +5,50 @@ from statistics import mean, median
 from razdel import sentenize
 import re
 
+def group_paragraphs(pars):
+    new_paragraphs = []
+
+    last_parag = ""
+
+    for now_parag in pars:
+        if len(now_parag) < 5:
+            last_parag += now_parag
+        elif len(last_parag) > 500 and re.search(r'(?<!\d)\s*\.\s*(?!\d)', now_parag):
+            splits = re.split(r'(?<!\d)\s*\.\s*(?!\d)', now_parag, 1)
+            last_parag += splits[0]
+            last_parag += '.'
+            new_paragraphs.append(last_parag)
+            last_parag = splits[1].lstrip()
+            last_parag = last_parag.lstrip('.')
+            # print('here', new_paragraphs[-1])
+            # print('HERE TO', last_parag)
+        elif now_parag.strip().endswith('.'):
+            last_parag += now_parag
+            new_paragraphs.append(last_parag)
+            last_parag = ""
+        else:
+            last_parag += now_parag
+    new_paragraphs.append(last_parag)
+    return new_paragraphs
+
+def merge_paragraphs(paragraphs):
+    merged_paragraphs = []
+    i = 0
+    n = len(paragraphs)
+
+    while i < n:
+        current = paragraphs[i]
+        # Пока текущая строка заканчивается на '-' и есть следующая строка
+        while (current.endswith('-')) and i + 1 < n:
+            i += 1
+            next_paragraph = paragraphs[i]
+            current = current[:-1] + next_paragraph
+        merged_paragraphs.append(current)
+        i += 1
+
+    return merged_paragraphs
+
+
 def extract_lines(page):
 
     words = [
@@ -47,6 +91,7 @@ def extract_paragraphs(lines: list):
 
     paragraphs = []
     paragraph = [lines[0]]
+
 
     avg_line_spacing = median([abs(lines[i][0].y1 - lines[i + 1][0].y0) for i in range(len(lines) - 1)])
     avg_line_width = median([lines[i][0].x1 - lines[i][0].x0 for i in range(len(lines))])
@@ -102,21 +147,7 @@ def get_paragraphs(filename):
 
                 paragraphs.append(paragraph_line)
 
-            merged_paragraphs = []
-            i = 0
-            n = len(paragraphs)
-
-            while i < n:
-                current = paragraphs[i]
-                # Пока текущая строка заканчивается на '-' и есть следующая строка
-                while current.endswith('-') and i + 1 < n:
-                    i += 1
-                    next_paragraph = paragraphs[i]
-                    current = current[:-1] + next_paragraph
-                merged_paragraphs.append(current)
-                i += 1
-
-    return merged_paragraphs
+    return  group_paragraphs(merge_paragraphs(paragraphs))
 
 def get_figures_paragraphs(paragraphs, min_len=5):
 
@@ -142,24 +173,19 @@ def get_figures_paragraphs(paragraphs, min_len=5):
 
     return figure_paragraphs
 
-def split_paragraphs_on_sent(paragraphs):
+def split_paragraph_on_sent(paragraph):
 
-    splited_paragraphs = []
+    sentences = []
 
-    for p in paragraphs:
+    for sent in sentenize(paragraph):
+        sentences.append(sent.text)
 
-        sentences = []
 
-        for sent in sentenize(p):
-            sentences.append(sent)
-
-        splited_paragraphs.append(sentences)
-
-    return splited_paragraphs
+    return sentences
 
 if __name__ == "__main__":
 
-    filename = os.path.join("./Articles", sorted(os.listdir("./Articles"))[12])
+    filename = os.path.join("./Articles", sorted(os.listdir("./Articles"))[7])
     for p in get_paragraphs(filename):
         print(p)
         print("-------------r---------------")

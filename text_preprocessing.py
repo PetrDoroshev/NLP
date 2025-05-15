@@ -7,8 +7,8 @@ from nltk.corpus import stopwords
 
 def clean_text(text):
 
-    cleaned_text = re.sub(r'\([^)]*\)', '', text)
-    cleaned_text = re.sub('[^а-яА-Я0-9\s]', '', cleaned_text)
+    #cleaned_text = re.sub(r'\([^)]*\)', '', text)
+    cleaned_text = re.sub('[^а-яА-Я0-9ё\s]', '', text)
     cleaned_text = re.sub(r'[^\w\s]', '', cleaned_text)
     cleaned_text = re.sub(r"\d+", "", cleaned_text)
     cleaned_text = re.sub(r'[a-zA-Z0-9\'_-]+', '', cleaned_text)

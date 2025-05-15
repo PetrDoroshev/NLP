@@ -1,7 +1,7 @@
 import nltk
 from navec import Navec
 from slovnet import Morph
-from paragraph_processing import get_paragraphs, get_figures_paragraphs, split_paragraphs_on_sent
+from paragraph_processing import get_paragraphs, get_figures_paragraphs, split_paragraph_on_sent
 from text_preprocessing import *
 import text_preprocessing
 import natasha
@@ -45,12 +45,12 @@ for i in range(len(os.listdir("./Articles")) - 1):
     report_dict_2 = {"lemmas": []}
 
 
-    for p in split_paragraphs_on_sent(paragraphs):
+    for p in paragraphs:
 
         paragraph_tokens = []
         paragraph_lemmas = []
 
-        for sent in p:
+        for sent in split_paragraph_on_sent(p):
 
             sentence_tokens = get_tokens(sent.text)
             sentence_lemmas = get_lemmas(sentence_tokens, morph, morph_vocab)
