@@ -1,5 +1,5 @@
 import pymupdf
-from pymupdf import TEXT_DEHYPHENATE
+from pymupdf import TEXT_DEHYPHENATE, TEXTFLAGS_WORDS
 import os
 from statistics import mean, median
 from razdel import sentenize
@@ -8,7 +8,7 @@ import re
 def extract_lines(page):
 
     words = [
-            (pymupdf.Rect(w[:4]), w[4]) for w in page.get_text("words", sort=False, flags=TEXT_DEHYPHENATE)
+            (pymupdf.Rect(w[:4]), w[4]) for w in page.get_text("words", sort=False, flags=TEXTFLAGS_WORDS)
         ]
 
     if len(words) == 0:
@@ -83,12 +83,40 @@ def get_paragraphs(filename):
     for page in doc:
          lines = extract_lines(page)
          if len(lines) > 1:
-            paragraphs_lines =  extract_paragraphs(lines)
+
+            paragraphs_lines = extract_paragraphs(lines)
+
             for p in paragraphs_lines:
-                paragraphs.append("\n".join([line[1] for line in p]))
 
-    return paragraphs
+                paragraph_line = ""
+                lines = [line[1] for line in p]
 
+                for i in range(len(lines)):
+
+                    line = lines[i]
+                    if line.endswith("-"):
+                        if i != len(lines) - 1: line = line[:-1]
+                        paragraph_line += f'{line}'
+                    else:
+                        paragraph_line += f'{line}\n'
+
+                paragraphs.append(paragraph_line)
+
+            merged_paragraphs = []
+            i = 0
+            n = len(paragraphs)
+
+            while i < n:
+                current = paragraphs[i]
+                # Пока текущая строка заканчивается на '-' и есть следующая строка
+                while current.endswith('-') and i + 1 < n:
+                    i += 1
+                    next_paragraph = paragraphs[i]
+                    current = current[:-1] + next_paragraph
+                merged_paragraphs.append(current)
+                i += 1
+
+    return merged_paragraphs
 
 def get_figures_paragraphs(paragraphs, min_len=5):
 
@@ -131,7 +159,7 @@ def split_paragraphs_on_sent(paragraphs):
 
 if __name__ == "__main__":
 
-    filename = os.path.join("./Articles", sorted(os.listdir("./Articles"))[5])
+    filename = os.path.join("./Articles", sorted(os.listdir("./Articles"))[12])
     for p in get_paragraphs(filename):
         print(p)
         print("-------------r---------------")
