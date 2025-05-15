@@ -31,14 +31,14 @@ def resolve_coreference(doc, word):
     return None
 
 
-def extract_triplets(sentence):
+def extract_triplets(paragraph):
 
-    if not sentence:
+    if not paragraph:
         return []
 
     triplets = []
 
-    doc = pipe(sentence)
+    doc = pipe(paragraph)
     for sent in doc.sentences:
 
         res_d = dict()
@@ -104,7 +104,7 @@ def extract_triplets(sentence):
 with open('./preprocessing_data/Параграфы_с_рисунками/Диссертация Липилин АС_figures_paragraphs.json', encoding="utf-8") as json_file:
     data = json.load(json_file)
 
-    for p in ["При этом электролит имеет структуру плотной керамики, а электроды имеют требуемую пористую структуру с открытой пористостью 46-49% (рис. 128г)."]:
+    for p in data["paragraphs"]:
 
         triplets = extract_triplets(p)
         if triplets: print(f"{triplets},")
