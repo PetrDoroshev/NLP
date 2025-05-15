@@ -1,10 +1,99 @@
-import pymupdf
-from pymupdf import TEXT_DEHYPHENATE, TEXTFLAGS_WORDS
+import re
 import os
+import io
+import json
+import pymupdf
+
+from pymupdf import TEXT_DEHYPHENATE, TEXTFLAGS_WORDS
 from statistics import mean, median
 from razdel import sentenize
-import re
 
+# Главная функция для обработки параграфов и текста
+def mod_paragraph_processing(articles_docs, output_folder, teseract_mode):
+    all_raw_articles = sorted(os.listdir(articles_docs))
+
+    for now_raw_article in all_raw_articles:
+        print(f"Processing: {now_raw_article}")
+        # if 'Якименко' not in now_raw_article: continue
+        filename = os.path.join("./Articles", now_raw_article)
+        article_name = ".".join(now_raw_article.split(".")[:-1])
+
+        paragraphs = get_paragraphs(filename, teseract_mode)
+
+        report_dict = {"paragraphs": paragraphs}
+        save_dict_as_json(f"{output_folder}/Параграфы/{article_name}_paragraphs.json", report_dict)
+
+    print("Completed!")
+
+# Основная функция, которая парсит файл и возвращает параграфы
+def get_paragraphs(filename, teseract_path=None):
+    doc = pymupdf.open(filename)
+    paragraphs = []
+
+    do_image_in_doc_exists = False
+
+    if teseract_path is not None:
+        import pytesseract
+        from PIL import Image
+        if teseract_path != "<linux>":
+            pytesseract.pytesseract.tesseract_cmd = teseract_path
+
+    last_processed_image_page_id = -1
+
+    for page_id, page in enumerate(doc):
+        images_data = page.get_images(full=True)
+        if do_image_in_doc_exists or images_data:
+            do_image_in_doc_exists = True
+        else:
+            continue
+        
+        lines = extract_lines(page)
+        if len(lines) > 1:
+            last_processed_image_page_id = -1
+            paragraphs_lines = extract_paragraphs(lines)
+            
+            for p in paragraphs_lines:
+            
+                paragraph_line = ""
+                lines = [line[1] for line in p]
+            
+                for i in range(len(lines)):
+            
+                    line = lines[i]
+                    if line.endswith("-"):
+                        if i != len(lines) - 1: line = line[:-1]
+                        paragraph_line += f'{line}'
+                    else:
+                        paragraph_line += f'{line}\n'
+            
+                paragraphs.append(paragraph_line)
+        elif teseract_path is not None and images_data:
+            if last_processed_image_page_id == -1:
+                print(f"\tScan processing for page №{page_id}")
+            else:
+                if page_id % 10 == 0:
+                    print(f"\tScan processing for page №{page_id}")
+            text = ""
+            last_processed_image_page_id = page_id
+
+            for img_idx, img in enumerate(images_data, start=1):
+                xref = img[0]
+                base_image = doc.extract_image(xref)
+                image_bytes = base_image["image"] 
+                
+                img = Image.open(io.BytesIO(image_bytes))
+                img_text = pytesseract.image_to_string(img, lang="rus")
+                
+                text += f" тег_картинки {img_text.strip()} тег_картинки_конец "
+
+            all_paragraphs = [i + '\n' for i in text.split('\n')]
+            paragraphs.extend(all_paragraphs)
+        else:
+            print(f"\tPage {page_id} skipped due no text or no image or disabled teseract")
+            
+    return  group_paragraphs(merge_paragraphs(paragraphs))
+
+# Дополнительное объеденение параграфов на основании числа знаков и наличия/позиции точки
 def group_paragraphs(pars):
     new_paragraphs = []
 
@@ -20,8 +109,6 @@ def group_paragraphs(pars):
             new_paragraphs.append(last_parag)
             last_parag = splits[1].lstrip()
             last_parag = last_parag.lstrip('.')
-            # print('here', new_paragraphs[-1])
-            # print('HERE TO', last_parag)
         elif now_parag.strip().endswith('.'):
             last_parag += now_parag
             new_paragraphs.append(last_parag)
@@ -50,7 +137,6 @@ def merge_paragraphs(paragraphs):
 
 
 def extract_lines(page):
-
     words = [
             (pymupdf.Rect(w[:4]), w[4]) for w in page.get_text("words", sort=False, flags=TEXTFLAGS_WORDS)
         ]
@@ -85,7 +171,6 @@ def extract_lines(page):
     return lines
 
 def extract_paragraphs(lines: list):
-
     if len(lines) < 1:
         return
 
@@ -117,40 +202,7 @@ def extract_paragraphs(lines: list):
 
     return paragraphs
 
-
-
-
-def get_paragraphs(filename):
-
-    doc = pymupdf.open(filename)
-    paragraphs = []
-
-    for page in doc:
-         lines = extract_lines(page)
-         if len(lines) > 1:
-
-            paragraphs_lines = extract_paragraphs(lines)
-
-            for p in paragraphs_lines:
-
-                paragraph_line = ""
-                lines = [line[1] for line in p]
-
-                for i in range(len(lines)):
-
-                    line = lines[i]
-                    if line.endswith("-"):
-                        if i != len(lines) - 1: line = line[:-1]
-                        paragraph_line += f'{line}'
-                    else:
-                        paragraph_line += f'{line}\n'
-
-                paragraphs.append(paragraph_line)
-
-    return  group_paragraphs(merge_paragraphs(paragraphs))
-
 def get_figures_paragraphs(paragraphs, min_len=5):
-
     figure_pattern = re.compile(r'(рис\.|рисун[a-я]{2})', re.IGNORECASE)
     figure_paragraphs = []
 
@@ -174,19 +226,17 @@ def get_figures_paragraphs(paragraphs, min_len=5):
     return figure_paragraphs
 
 def split_paragraph_on_sent(paragraph):
-
     sentences = []
-
     for sent in sentenize(paragraph):
         sentences.append(sent.text)
-
-
     return sentences
 
-if __name__ == "__main__":
+def save_dict_as_json(path, dictionary):
+    with open(path, 'w', encoding='utf-8') as json_file:
+        json.dump(dictionary, json_file, ensure_ascii=False, indent=4)
 
+if __name__ == "__main__":
     filename = os.path.join("./Articles", sorted(os.listdir("./Articles"))[7])
-    for p in get_paragraphs(filename):
+    for p in get_paragraphs(filename, False):
         print(p)
         print("-------------r---------------")
-

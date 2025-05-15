@@ -8,3 +8,7 @@
 /images/
 /docs/
 /Articles/
+
+/venv
+/__pycache__
+/.ipynb_checkpoints
