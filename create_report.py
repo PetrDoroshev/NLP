@@ -52,7 +52,7 @@ for i in range(len(os.listdir("./Articles")) - 1):
 
         for sent in split_paragraph_on_sent(p):
 
-            sentence_tokens = get_tokens(sent.text)
+            sentence_tokens = get_tokens(sent)
             sentence_lemmas = get_lemmas(sentence_tokens, morph, morph_vocab)
 
             paragraph_tokens.append(sentence_tokens)
