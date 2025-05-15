@@ -1,0 +1,15 @@
+backports.tarfile
+fqdn
+importlib-metadata
+isoduration
+jaraco.collections
+jsonpointer
+jupyter
+pip-chill
+pymupdf
+pytesseract
+razdel
+tinycss2
+tomli
+uri-template
+webcolors
