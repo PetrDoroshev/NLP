@@ -6,7 +6,6 @@ import pymupdf
 
 from pymupdf import TEXT_DEHYPHENATE, TEXTFLAGS_WORDS
 from statistics import mean, median
-from razdel import sentenize
 
 # Главная функция для обработки параграфов и текста
 def mod_paragraph_processing(articles_docs, output_folder, teseract_mode):
@@ -15,13 +14,13 @@ def mod_paragraph_processing(articles_docs, output_folder, teseract_mode):
     for now_raw_article in all_raw_articles:
         print(f"Processing: {now_raw_article}")
         # if 'Якименко' not in now_raw_article: continue
-        filename = os.path.join("./Articles", now_raw_article)
+        full_file_path = os.path.join(articles_docs, now_raw_article)
         article_name = ".".join(now_raw_article.split(".")[:-1])
 
-        paragraphs = get_paragraphs(filename, teseract_mode)
+        paragraphs = get_paragraphs(full_file_path, teseract_mode)
 
         report_dict = {"paragraphs": paragraphs}
-        save_dict_as_json(f"{output_folder}/Параграфы/{article_name}_paragraphs.json", report_dict)
+        save_dict_as_json(f"{output_folder}/{article_name}_paragraphs.json", report_dict)
 
     print("Completed!")
 
@@ -72,7 +71,7 @@ def get_paragraphs(filename, teseract_path=None):
                 print(f"\tScan processing for page №{page_id}")
             else:
                 if page_id % 10 == 0:
-                    print(f"\tScan processing for page №{page_id}")
+                    print(f"\tScan processing for page №{page_id} and at least one page before")
             text = ""
             last_processed_image_page_id = page_id
 
@@ -224,12 +223,6 @@ def get_figures_paragraphs(paragraphs, min_len=5):
             figure_paragraphs.append(p)
 
     return figure_paragraphs
-
-def split_paragraph_on_sent(paragraph):
-    sentences = []
-    for sent in sentenize(paragraph):
-        sentences.append(sent.text)
-    return sentences
 
 def save_dict_as_json(path, dictionary):
     with open(path, 'w', encoding='utf-8') as json_file:

@@ -65,7 +65,3 @@ for i in range(len(os.listdir("./Articles")) - 1):
     save_dict_as_json(f"{report_path}/Токенизация/{article_name}_tokenized.json", report_dict)
     save_dict_as_json(f"{report_path}/Лемматизация/{article_name}_lemmatized.json", report_dict_2)
 
-
-
-
-
