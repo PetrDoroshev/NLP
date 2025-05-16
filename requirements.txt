@@ -1,14 +1,16 @@
 backports.tarfile
 fqdn
+hunspell
 importlib-metadata
 isoduration
 jaraco.collections
 jsonpointer
 jupyter
+natasha
+nltk
 pip-chill
 pymupdf
 pytesseract
-razdel
 tinycss2
 tomli
 uri-template
