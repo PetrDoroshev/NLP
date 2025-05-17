@@ -15,3 +15,4 @@ tinycss2
 tomli
 uri-template
 webcolors
+stanza
