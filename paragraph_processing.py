@@ -8,16 +8,25 @@ from pymupdf import TEXT_DEHYPHENATE, TEXTFLAGS_WORDS
 from statistics import mean, median
 
 # Главная функция для обработки параграфов и текста
-def mod_paragraph_processing(articles_docs, output_folder, teseract_mode):
+def mod_paragraph_processing(articles_docs, output_folder, teseract_mode, images_store_dir):
     all_raw_articles = sorted(os.listdir(articles_docs))
 
     for now_raw_article in all_raw_articles:
         print(f"Processing: {now_raw_article}")
-        # if 'Якименко' not in now_raw_article: continue
+        # if 'Твёрдые электролиты' not in now_raw_article: continue
         full_file_path = os.path.join(articles_docs, now_raw_article)
         article_name = ".".join(now_raw_article.split(".")[:-1])
 
-        paragraphs = get_paragraphs(full_file_path, teseract_mode)
+        imgs_dir = images_store_dir
+        if images_store_dir is not None:
+            imgs_dir = os.path.join(images_store_dir, article_name)
+            try:
+                os.mkdir(imgs_dir)
+                print(f"\tFolder created {imgs_dir}")
+            except OSError as error:
+                pass
+
+        paragraphs = get_paragraphs(full_file_path, teseract_mode, imgs_dir)
 
         report_dict = {"paragraphs": paragraphs}
         save_dict_as_json(f"{output_folder}/{article_name}_paragraphs.json", report_dict)
@@ -25,8 +34,11 @@ def mod_paragraph_processing(articles_docs, output_folder, teseract_mode):
     print("Completed!")
 
 # Основная функция, которая парсит файл и возвращает параграфы
-def get_paragraphs(filename, teseract_path=None):
+def get_paragraphs(filename, teseract_path=None, imgs_dir=None):
+    min_px_size = 25
+    min_px_size_vect = 60
     doc = pymupdf.open(filename)
+    article_name = ".".join(filename.split("/")[-1].split(".")[:-1])
     paragraphs = []
 
     do_image_in_doc_exists = False
@@ -40,9 +52,50 @@ def get_paragraphs(filename, teseract_path=None):
     last_processed_image_page_id = -1
 
     for page_id, page in enumerate(doc):
+        
         images_data = page.get_images(full=True)
         if do_image_in_doc_exists or images_data:
             do_image_in_doc_exists = True
+            image_id = (page_id + 1) * 1000
+            
+            if imgs_dir is not None:
+                for img_index, img in enumerate(images_data):
+                    xref = img[0]
+                    base_image = doc.extract_image(xref)
+                    
+                    if not base_image["image"]:
+                        continue
+
+                    img_pil = Image.open(io.BytesIO(base_image["image"]))
+                    width, height = img_pil.size
+
+                    if min(width, height) <= min_px_size:
+                        continue
+                    
+                    ext = base_image["ext"]
+                    filename = f"image_{image_id}.{ext}"
+                    output_path = os.path.join(imgs_dir, filename)
+                    
+                    with open(output_path, "wb") as f:
+                        f.write(base_image["image"])
+                    
+                    image_id += 1
+                    
+                for draw_index, path in enumerate(page.get_drawings()):
+                    try:
+                        rect = path["rect"]
+                        dpi = 72
+                        width_px = rect.width * dpi / 72
+                        height_px = rect.height * dpi / 72
+                        if min(width_px, height_px) >= min_px_size_vect:
+                            pix = page.get_pixmap(clip=rect)
+                            filename = f"image_{image_id}.png"
+                            output_path = os.path.join(imgs_dir, filename)
+                            pix.save(f"{output_path}")
+                            image_id += 1
+                    except Exception as e:
+                        pass
+                        # print(f"Error with drawing {draw_index} on page {page_id}: {e}")
         else:
             continue
         
