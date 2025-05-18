@@ -12,7 +12,12 @@ def create_db(conn, db_name):
     conn.autocommit = True
 
     create_db_query = f"CREATE DATABASE {db_name}"
-    cursor.execute(create_db_query)
+
+    try:
+        cursor.execute(create_db_query)
+
+    except psycopg2.DatabaseError as err:
+        print("Error: ", err)
 
     cursor.close()
 
@@ -20,7 +25,12 @@ def init_schema(conn, filename):
 
     cursor = conn.cursor()
     conn.autocommit = True
-    cursor.execute(open("filename", "r").read())
+
+    try:
+        cursor.execute(open("filename", "r").read())
+
+    except psycopg2.DatabaseError as err:
+        print("Error: ", err)
 
     cursor.close()
 
