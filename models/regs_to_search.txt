@@ -1,0 +1,1 @@
+<start_regex>(рис\.|рисун[a-я]{2})<end_regex>

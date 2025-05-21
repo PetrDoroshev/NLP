@@ -96,9 +96,8 @@ def get_paragraphs(filename, teseract_path=None, imgs_dir=None):
                     except Exception as e:
                         pass
                         # print(f"Error with drawing {draw_index} on page {page_id}: {e}")
-        else:
-            continue
         
+        paragraphs.append(f"ъъъууу{"ш" * (page_id + 1)}уууъъъ")
         lines = extract_lines(page)
         if len(lines) > 1:
             last_processed_image_page_id = -1
@@ -150,8 +149,13 @@ def group_paragraphs(pars):
     new_paragraphs = []
 
     last_parag = ""
+    page_num = None
 
     for now_parag in pars:
+        if now_parag.startswith("ъъъууу") and now_parag.endswith("уууъъъ") and page_num is None:
+            page_num = now_parag
+            continue
+            
         if len(now_parag) < 5:
             last_parag += now_parag
         elif len(last_parag) > 500 and re.search(r'(?<!\d)\s*\.\s*(?!\d)', now_parag):
@@ -159,15 +163,26 @@ def group_paragraphs(pars):
             last_parag += splits[0]
             last_parag += '.'
             new_paragraphs.append(last_parag)
+
+            if page_num is not None:
+                new_paragraphs.append(page_num)
+                page_num = None
+            
             last_parag = splits[1].lstrip()
             last_parag = last_parag.lstrip('.')
         elif now_parag.strip().endswith('.'):
             last_parag += now_parag
             new_paragraphs.append(last_parag)
+            if page_num is not None:
+                new_paragraphs.append(page_num)
+                page_num = None
             last_parag = ""
         else:
             last_parag += now_parag
     new_paragraphs.append(last_parag)
+    if page_num is not None:
+        new_paragraphs.append(page_num)
+        page_num = None
     return new_paragraphs
 
 def merge_paragraphs(paragraphs):
@@ -175,14 +190,23 @@ def merge_paragraphs(paragraphs):
     i = 0
     n = len(paragraphs)
 
+    page_num = None
+
     while i < n:
         current = paragraphs[i]
+            
         # Пока текущая строка заканчивается на '-' и есть следующая строка
         while (current.endswith('-')) and i + 1 < n:
             i += 1
             next_paragraph = paragraphs[i]
+            if next_paragraph.startswith("ъъъууу") and next_paragraph.endswith("уууъъъ") and page_num is None:
+                page_num = next_paragraph
+                continue
             current = current[:-1] + next_paragraph
         merged_paragraphs.append(current)
+        if page_num is not None:
+            merged_paragraphs.append(page_num)
+            page_num = None
         i += 1
 
     return merged_paragraphs
@@ -253,29 +277,6 @@ def extract_paragraphs(lines: list):
         paragraphs.append(paragraph)
 
     return paragraphs
-
-def get_figures_paragraphs(paragraphs, min_len=5):
-    figure_pattern = re.compile(r'(рис\.|рисун[a-я]{2})', re.IGNORECASE)
-    figure_paragraphs = []
-
-    '''
-    for i in range(len(paragraphs)):
-        if figure_pattern.search(paragraphs[i]):
-
-            paragraph = paragraphs[i].split("\n")
-            if len(paragraph) < min_len:
-                for k in range(i + 1, len(paragraphs)):
-                    paragraph += paragraphs[k].split("\n")
-                    if len(paragraph) > min_len:
-                        break
-
-          figure_paragraphs.append("\n".join(paragraph))
-    '''
-    for p in paragraphs:
-        if figure_pattern.search(p):
-            figure_paragraphs.append(p)
-
-    return figure_paragraphs
 
 def save_dict_as_json(path, dictionary):
     with open(path, 'w', encoding='utf-8') as json_file:
