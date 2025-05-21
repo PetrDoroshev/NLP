@@ -52,7 +52,7 @@ def get_fragments(paragraphs, regs, min_len=5):
     for p in paragraphs:
         if p.startswith("ъъъууу") and p.endswith("уууъъъ"):
             if now_fragment is None:
-                fragments.append(p)
+                fragments.append(text_to_page(p))
             else:
                 last_page = p
             continue
@@ -68,13 +68,17 @@ def get_fragments(paragraphs, regs, min_len=5):
             if now_fragment is not None:
                 fragments.append(now_fragment)
                 if last_page is not None:
-                    fragments.append(last_page)
+                    fragments.append(text_to_page(last_page))
+                    last_page = None
                 now_fragment = None
                 
     if now_fragment is not None:
         fragments.append(now_fragment)
 
     return fragments
+
+def text_to_page(s):
+    return f"Page {s.count('ш')}"
 
 def save_dict_as_json(path, dictionary):
     with open(path, 'w', encoding='utf-8') as json_file:
