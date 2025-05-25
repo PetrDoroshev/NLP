@@ -15,3 +15,8 @@
 /.ipynb_checkpoints
 /scripts/.ipynb_checkpoints
 /legacy/.ipynb_checkpoints
+
+/models/functional_triplets.json
+/models/hier_triplets.json
+/models/.ipynb_checkpoints
+/models/train_text.txt
