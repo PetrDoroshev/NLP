@@ -2,9 +2,10 @@ import os
 from os import environ
 import psycopg2
 
-conn = psycopg2.connect(dbname="postgres", user=f"{os.environ['USER']}",
-                        password=f"{os.environ['PASSWORD']}", host=f"{os.environ['HOST']}")
+import scripts_shared_functions
 
+pg_data = scripts_shared_functions.get_pg_data()
+conn = scripts_shared_functions.get_db_connetion(pg_data)
 
 def create_db(conn, db_name):
 
@@ -33,6 +34,3 @@ def init_schema(conn, filename):
         print("Error: ", err)
 
     cursor.close()
-
-
-
