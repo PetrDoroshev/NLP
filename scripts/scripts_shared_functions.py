@@ -20,11 +20,11 @@ def get_pg_data():
         pass
     
     db_params = {
-        "host": '' or os.environ['NLP_PG_HOST'].replace("'", "").replace('"', ''),
-        "port": '' or os.environ['NLP_PG_PORT'].replace("'", "").replace('"', ''),
-        "db_name": '' or os.environ['NLP_PG_DB_NAME'].replace("'", "").replace('"', ''),
-        "user": '' or os.environ['NLP_PG_USER'].replace("'", "").replace('"', ''),
-        "password": '' or os.environ['NLP_PG_PASSWORD'].replace("'", "").replace('"', ''),
+        "host": '' or os.environ['NLP_PG_HOST'],
+        "port": '' or os.environ['NLP_PG_PORT'],
+        "db_name": '' or os.environ['NLP_PG_DB_NAME'],
+        "user": '' or os.environ['NLP_PG_USER'],
+        "password": '' or os.environ['NLP_PG_PASSWORD'],
     }
     
     return db_params
