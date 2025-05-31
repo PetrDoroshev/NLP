@@ -75,10 +75,13 @@ def get_paragraphs(filename, teseract_path=None, imgs_dir=None):
 
                     if min(width, height) <= min_px_size:
                         continue
+
+                    page_path = os.path.join(imgs_dir, f'page_{page_id+1}')
+                    os.makedirs(page_path, exist_ok=True)
                     
                     ext = base_image["ext"]
                     filename = f"image_{image_id}.{ext}"
-                    output_path = os.path.join(imgs_dir, filename)
+                    output_path = os.path.join(page_path, filename)
                     
                     with open(output_path, "wb") as f:
                         f.write(base_image["image"])
@@ -94,8 +97,10 @@ def get_paragraphs(filename, teseract_path=None, imgs_dir=None):
                         height_px = rect.height * dpi / 72
                         if min(width_px, height_px) >= min_px_size_vect:
                             pix = page.get_pixmap(clip=rect)
+                            page_path = os.path.join(imgs_dir, f'page_{page_id+1}')
+                            os.makedirs(page_path, exist_ok=True)
                             filename = f"image_{image_id}.png"
-                            output_path = os.path.join(imgs_dir, filename)
+                            output_path = os.path.join(page_path, filename)
                             pix.save(f"{output_path}")
                             image_id += 1
                             latest_image_page = image_id // 1000

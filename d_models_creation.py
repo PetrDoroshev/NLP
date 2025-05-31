@@ -62,7 +62,6 @@ def get_tokens(text, check_stopwords=True):
                 tokens.append(token.text)
         else:
             tokens.append(token.text)
-
     return tokens
 
 

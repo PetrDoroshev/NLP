@@ -13,6 +13,7 @@ def mod_init_articles(pg_data, raw_articles_text_path, table_name):
         print(f"Processing: {now_raw_article}")
         full_file_path = os.path.join(raw_articles_text_path, now_raw_article)
         article_name = str(".".join(now_raw_article.split(".")[:-1]))
+        article_name = article_name.replace("_paragraphs", "")
 
         article_text = merge_paragraphs(full_file_path)
     
