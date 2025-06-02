@@ -21,11 +21,14 @@ class Entity:
         else:
             return f"{self.subject.lemma}"
 
-def mod_extract_functional_relations(raw_fragments_path, function_triplets_path):
+def mod_extract_functional_relations(raw_fragments_path, function_triplets_path, save_old_triplets=True):
     pipe = stanza.Pipeline(lang='ru', processors='tokenize, pos, lemma, coref, depparse')
     all_raw_fragments = sorted(os.listdir(raw_fragments_path))
 
-    all_triplets = []
+    if save_old_triplets:
+        all_triplets = read_old_triplets(function_triplets_path)
+    else:
+        all_triplets = []
     
     for now_raw_fragments in all_raw_fragments:
         print(f"\tProcessing: {now_raw_fragments}")
@@ -47,6 +50,17 @@ def mod_extract_functional_relations(raw_fragments_path, function_triplets_path)
     shared_functions.save_dict_as_json(function_triplets_path, triplets)
 
     print(f"Completed!")
+
+def read_old_triplets(triplets_path):
+    all_triplets = []
+
+    old_triplets = shared_functions.load_dict_from_json(triplets_path)
+
+    for now_trip in old_triplets["triplets"]:
+        for now_art_name in now_trip:
+            all_triplets.append( {str(now_art_name): now_trip[now_art_name] })
+            
+    return all_triplets
 
 def resolve_coreference(doc, word):
     if len(word.coref_chains) <= 0:

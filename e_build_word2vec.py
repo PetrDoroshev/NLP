@@ -26,7 +26,7 @@ def mod_build_word2vec(raw_fragments_path, result_model_path, all_combined_text_
 
         fragments = shared_functions.load_dict_from_json(full_file_path)
         
-        for p_raw in fragments['clean_text']:
+        for p_raw in fragments['cleaned_text']:
             _, p = shared_functions.split_page_and_metadata(p_raw)
             for sent in d_models_creation.split_paragraph_on_sent(p):
                 tokens = d_models_creation.get_tokens(sent)

@@ -4,11 +4,6 @@ import boto3
 def mod_save_images(bucket_name, images_path):
     all_images_folder = sorted(os.listdir(images_path))
 
-    session = boto3.session.Session(
-        aws_access_key_id='YCAJEaiFcHiyXPPGyxMuG8OzK',
-        aws_secret_access_key='',
-        region_name='ru-central1',
-    )
     
     s3 = session.client('s3', endpoint_url='https://storage.yandexcloud.net')
     

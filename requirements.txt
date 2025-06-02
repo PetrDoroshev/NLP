@@ -1,3 +1,4 @@
+boto3
 fqdn
 gensim
 hunspell
@@ -16,3 +17,4 @@ stanza
 tinycss2
 uri-template
 webcolors
+numpy<2.0.0
