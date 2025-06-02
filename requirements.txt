@@ -10,6 +10,7 @@ natasha
 nltk
 peft
 pip-chill
+psycopg2
 pymupdf
 pytesseract
 scikit-learn
@@ -17,4 +18,3 @@ stanza
 tinycss2
 uri-template
 webcolors
-numpy<2.0.0
