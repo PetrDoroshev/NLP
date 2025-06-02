@@ -9,6 +9,8 @@ def mod_init_articles(pg_data, raw_articles_text_path, table_name):
     conn = scripts_shared_functions.get_db_connetion(pg_data)
     cur = conn.cursor()
 
+    filled_ids = []
+
     for now_raw_article in all_raw_articles:
         print(f"Processing: {now_raw_article}")
         full_file_path = os.path.join(raw_articles_text_path, now_raw_article)
@@ -19,7 +21,8 @@ def mod_init_articles(pg_data, raw_articles_text_path, table_name):
     
         cur.execute(f"SELECT 1 FROM {table_name} WHERE title = %s", (article_name,))
         if not cur.fetchone():
-            cur.execute(f"INSERT INTO {table_name} (title, language, content) VALUES (%s, %s, %s)", (article_name, 'rus', article_text))
+            exec_id = cur.execute(f"INSERT INTO {table_name} (title, language, content) VALUES (%s, %s, %s) RETURNING id", (article_name, 'rus', article_text))
+            filled_ids.append(cur.fetchone()[0])
             print(f"Inserted: {article_name}")
         else:
             print(f"Skipped (already exists): {article_name}")
@@ -27,6 +30,10 @@ def mod_init_articles(pg_data, raw_articles_text_path, table_name):
     conn.commit()
     cur.close()
     conn.close()
+
+    return filled_ids
+
+    print(filled_ids)
 
 def merge_paragraphs(text_file_path):
     paragraphs = scripts_shared_functions.load_dict_from_json(text_file_path)["paragraphs"]

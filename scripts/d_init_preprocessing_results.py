@@ -3,25 +3,24 @@ import psycopg2
 
 import scripts_shared_functions
 
-def mod_d_init_preprocessing_results(pg_data, tokens_path, lemmas_path, table_name):
+def mod_d_init_preprocessing_results(pg_data, tokens_path, lemmas_path, table_name, article_ids):
     all_tokens = sorted(os.listdir(tokens_path))
     all_lemmas = sorted(os.listdir(lemmas_path))
 
     conn = scripts_shared_functions.get_db_connetion(pg_data)
     cur = conn.cursor()
 
-    for now_token in all_tokens:
-        full_file_path = os.path.join(tokens_path, now_token)
-        article_name = str(".".join(now_token.split(".")[:-1])).replace("_paragraphs_fragments_cleaned_tokenized", "")
+    for now_article_id in article_ids:
+        cur.execute(f"SELECT title FROM articles WHERE id = %s", (now_article_id,))
+        article_name = cur.fetchone()[0]
 
-        cur.execute(f"SELECT id FROM articles WHERE title = %s", (article_name,))
-        art_id = cur.fetchone()[0]
+        cur.execute(f"SELECT id FROM fragments WHERE article_id = %s order by id", (now_article_id,))
+        all_fragments = cur.fetchall()
 
+        print(f"Processing: {article_name}; id {now_article_id}")
+
+        full_file_path = f"{tokens_path}/{article_name}_paragraphs_fragments_cleaned_tokenized.json"
         all_tok = scripts_shared_functions.load_dict_from_json(full_file_path)["tokens"]
-
-        cur.execute(f"SELECT id FROM fragments WHERE article_id = %s", (art_id,))
-        frag_ids = cur.fetchall()
-        frag_ids = sorted(frag_ids)
         last_id = 0
         
         for now_tok in all_tok:
@@ -29,21 +28,11 @@ def mod_d_init_preprocessing_results(pg_data, tokens_path, lemmas_path, table_na
                 content = " ".join(now_tok[0])
             except:
                 content = ""
-            cur.execute(f"INSERT INTO {table_name} (fragment_id, step, processed_text) VALUES (%s, %s, %s)", (frag_ids[last_id], "Token", content))
+            cur.execute(f"INSERT INTO {table_name} (fragment_id, step, processed_text) VALUES (%s, %s, %s)", (all_fragments[last_id], "Token", content))
             last_id += 1
 
-    for now_lemma in all_lemmas:
-        full_file_path = os.path.join(lemmas_path, now_lemma)
-        article_name = str(".".join(now_lemma.split(".")[:-1])).replace("_paragraphs_fragments_cleaned_lemmatized", "")
-
-        cur.execute(f"SELECT id FROM articles WHERE title = %s", (article_name,))
-        art_id = cur.fetchone()[0]
-
+        full_file_path = f"{lemmas_path}/{article_name}_paragraphs_fragments_cleaned_lemmatized.json"
         all_lem = scripts_shared_functions.load_dict_from_json(full_file_path)["lemmas"]
-
-        cur.execute(f"SELECT id FROM fragments WHERE article_id = %s", (art_id,))
-        frag_ids = cur.fetchall()
-        frag_ids = sorted(frag_ids)
         last_id = 0
         
         for now_lem in all_lem:
@@ -51,7 +40,7 @@ def mod_d_init_preprocessing_results(pg_data, tokens_path, lemmas_path, table_na
                 content = " ".join(now_lem[0])
             except:
                 content = ""
-            cur.execute(f"INSERT INTO {table_name} (fragment_id, step, processed_text) VALUES (%s, %s, %s)", (frag_ids[last_id], "Lemma", content))
+            cur.execute(f"INSERT INTO {table_name} (fragment_id, step, processed_text) VALUES (%s, %s, %s)", (all_fragments[last_id], "Lemma", content))
             last_id += 1
             
     conn.commit()

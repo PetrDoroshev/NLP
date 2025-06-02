@@ -58,3 +58,20 @@ def split_page_and_metadata(full_text):
         return metadata, other_content
     else:
         return None, full_text
+
+def get_page_metadata(full_text):
+    if not full_text.startswith("[(page"):
+        return None, full_text
+
+    pattern = r'\[\(page \d+\) \(latest_image_id \d+\)\]'
+    match = re.search(pattern, full_text)
+    if match:
+        metadata = match.group(0)
+        other_content = re.sub(pattern, '', full_text).strip()
+
+        digit_pattern = r'\d+'
+        metadata_digits = re.findall(digit_pattern, metadata)
+        
+        return metadata_digits, other_content
+    else:
+        return None, full_text
