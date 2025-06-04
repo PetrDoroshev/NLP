@@ -6,7 +6,7 @@ psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
 
 import scripts_shared_functions
 
-def mod_e_init_graphs(pg_data, func_triplets_path, hier_triplets_path, table_name, articles_ids):
+def mod_e_init_graphs(pg_data, func_triplets_path, hier_triplets_path, table_name, articles_ids, fragments_ids):
     json_triplets = scripts_shared_functions.load_dict_from_json(func_triplets_path)
     json_triplets = json_triplets["triplets"]
     hier_triplets = scripts_shared_functions.load_dict_from_json(hier_triplets_path)
@@ -14,12 +14,14 @@ def mod_e_init_graphs(pg_data, func_triplets_path, hier_triplets_path, table_nam
     conn = scripts_shared_functions.get_db_connetion(pg_data)
     cur = conn.cursor()
 
-    for now_article_id in articles_ids:
+    for now_index_id_art, now_article_id in enumerate(articles_ids):
         cur.execute(f"SELECT title FROM articles WHERE id = %s", (now_article_id,))
         article_name = cur.fetchone()[0]
 
-        cur.execute(f"SELECT id FROM fragments WHERE article_id = %s order by id", (now_article_id,))
-        all_fragments = cur.fetchall()
+        # cur.execute(f"SELECT id FROM fragments WHERE article_id = %s order by id", (now_article_id,))
+        # all_fragments = cur.fetchall()
+
+        all_fragments = fragments_ids[now_index_id_art]
 
         print(f"Processing: {article_name}; id {now_article_id}")
         last_id = 0

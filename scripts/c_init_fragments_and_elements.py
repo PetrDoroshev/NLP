@@ -75,7 +75,10 @@ def mod_init_fragments_and_elements(pg_data, fragments_path, table_name, article
     conn = scripts_shared_functions.get_db_connetion(pg_data)
     cur = conn.cursor()
 
+    all_fragments = []
+
     for (index_id, now_art_id) in enumerate(article_ids):
+        all_fragments.append([])
         cur.execute(f"SELECT title FROM articles WHERE id = %s", (now_art_id,))
         article_name = cur.fetchone()[0]
 
@@ -89,11 +92,16 @@ def mod_init_fragments_and_elements(pg_data, fragments_path, table_name, article
             digs, content = scripts_shared_functions.get_page_metadata(now_fraw)
             elem_id = arts[index_id][int(digs[1])]
             
-            cur.execute(f"INSERT INTO {table_name} (article_id, element_id, content) VALUES (%s, %s, %s)", (now_art_id, elem_id, content))
+            cur.execute(f"INSERT INTO {table_name} (article_id, element_id, content) VALUES (%s, %s, %s) RETURNING id", (now_art_id, elem_id, content))
+            frag_id = cur.fetchone()[0]
+            all_fragments[-1].append(frag_id)
             
     conn.commit()
     cur.close()
     conn.close()
+
+    return all_fragments
+
 
 if __name__ == '__main__':
     pg_data = scripts_shared_functions.get_pg_data()

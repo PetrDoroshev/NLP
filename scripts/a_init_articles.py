@@ -19,13 +19,15 @@ def mod_init_articles(pg_data, raw_articles_text_path, table_name):
 
         article_text = merge_paragraphs(full_file_path)
     
-        cur.execute(f"SELECT 1 FROM {table_name} WHERE title = %s", (article_name,))
-        if not cur.fetchone():
+        cur.execute(f"SELECT id FROM {table_name} WHERE title = %s", (article_name,))
+        title_res = cur.fetchone()
+        if not title_res:
             exec_id = cur.execute(f"INSERT INTO {table_name} (title, language, content) VALUES (%s, %s, %s) RETURNING id", (article_name, 'rus', article_text))
             filled_ids.append(cur.fetchone()[0])
             print(f"Inserted: {article_name}")
         else:
-            print(f"Skipped (already exists): {article_name}")
+            print(f"Skipped (already exists at id {title_res} ): {article_name}")
+            filled_ids.append(title_res[0])
             
     conn.commit()
     cur.close()
